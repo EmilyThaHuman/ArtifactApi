@@ -16,7 +16,15 @@ const app = express();
 
 // Set up middleware
 app.use(helmet());
-app.use(cors());
+
+// Configure CORS for different environments
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+app.use(cors(corsOptions));
 
 // Middleware to capture raw body for Stripe webhooks
 app.use((req, res, next) => {
@@ -45,6 +53,16 @@ app.use(requestLogger);
 // Serve static files from the uploads directory
 app.use('/uploads', express.static('routes/uploads'));
 
+// Add a root route for health checks
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Artifact API is running',
+    version: '1.0.0',
+    docs: `${process.env.API_URL || req.protocol + '://' + req.get('host')}/api-docs`
+  });
+});
+
 // Set up routes
 setupRoutes(app);
 
@@ -61,9 +79,11 @@ app.use((err, req, res, next) => {
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-  logger.info(`API documentation available at http://localhost:${PORT}/api-docs`);
+const HOST = process.env.HOST || '0.0.0.0'; // Use 0.0.0.0 for deployment
+
+app.listen(PORT, HOST, () => {
+  logger.info(`Server running on ${HOST}:${PORT}`);
+  logger.info(`API documentation available at ${process.env.API_URL || `http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`}/api-docs`);
 });
 
 export default app; 

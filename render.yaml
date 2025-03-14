@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: artifact-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: HOST
+        value: 0.0.0.0
+      - key: API_URL
+        fromService:
+          type: web
+          name: artifact-api
+          property: url
+      - key: CORS_ORIGIN
+        value: "*" # Update with your frontend URL in production 
