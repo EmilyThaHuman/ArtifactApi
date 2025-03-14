@@ -78,12 +78,17 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0'; // Use 0.0.0.0 for deployment
+const PORT = parseInt(process.env.PORT || '3002', 10);
+const HOST = process.env.HOST || '0.0.0.0';
+
+// Log important environment variables for debugging
+logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+logger.info(`Port from environment: ${process.env.PORT}`);
 
 app.listen(PORT, HOST, () => {
   logger.info(`Server running on ${HOST}:${PORT}`);
   logger.info(`API documentation available at ${process.env.API_URL || `http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`}/api-docs`);
+  logger.info(`Health check endpoint: ${process.env.API_URL || `http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`}/`);
 });
 
 export default app; 
