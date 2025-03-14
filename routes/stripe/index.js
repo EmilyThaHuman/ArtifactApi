@@ -5,9 +5,101 @@ import {
   createPaymentIntent,
   handleWebhookEvent
 } from './stripe.js';
+import { STRIPE_PRICES, SUBSCRIPTION_PLANS } from '../../config/stripe-prices.js';
 import logger from '../../utils/logger.js';
 
 const router = Router();
+
+/**
+ * @swagger
+ * /api/stripe/plans:
+ *   get:
+ *     summary: Get available subscription plans
+ *     tags: [Stripe]
+ *     responses:
+ *       200:
+ *         description: Available subscription plans
+ */
+router.get('/plans', (req, res) => {
+  try {
+    res.json({
+      plans: SUBSCRIPTION_PLANS
+    });
+  } catch (error) {
+    logger.error('Error retrieving plans:', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/stripe/create-subscription:
+ *   post:
+ *     summary: Create a subscription checkout session
+ *     tags: [Stripe]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               planId:
+ *                 type: string
+ *                 enum: [free, pro]
+ *               successUrl:
+ *                 type: string
+ *               cancelUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Subscription checkout session created
+ *       400:
+ *         description: Invalid request parameters
+ *       500:
+ *         description: Server error
+ */
+router.post('/create-subscription', async (req, res) => {
+  try {
+    const { planId, successUrl, cancelUrl, customerEmail } = req.body;
+    
+    if (!planId || !['free', 'pro'].includes(planId)) {
+      return res.status(400).json({ error: 'Valid planId (free or pro) is required' });
+    }
+    
+    // Get the corresponding plan
+    const plan = planId === 'free' 
+      ? SUBSCRIPTION_PLANS.FREE 
+      : SUBSCRIPTION_PLANS.PRO;
+    
+    // For free plan, you might want to handle differently or skip Stripe
+    if (planId === 'free' && plan.price === 0) {
+      // Option 1: Create a free subscription record in your database
+      // and return success directly
+      
+      // For demo purposes, we'll still create a Stripe checkout session
+      // but in production you might want to handle free plans differently
+    }
+    
+    const session = await createCheckoutSession({
+      lineItems: [
+        {
+          price: plan.priceId,
+          quantity: 1
+        }
+      ],
+      mode: 'subscription',
+      successUrl: successUrl || `${process.env.API_URL}/success`,
+      cancelUrl: cancelUrl || `${process.env.API_URL}/cancel`,
+      customerEmail
+    });
+    
+    res.json(session);
+  } catch (error) {
+    logger.error('Subscription creation failed:', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -217,6 +309,30 @@ router.post('/webhook', async (req, res) => {
         logger.info('Payment succeeded:', { 
           eventId: event.id,
           paymentIntentId: event.data.object.id 
+        });
+        break;
+        
+      case 'customer.subscription.created':
+        logger.info('Subscription created:', {
+          eventId: event.id,
+          customerId: event.data.object.customer,
+          subscriptionId: event.data.object.id
+        });
+        break;
+        
+      case 'customer.subscription.updated':
+        logger.info('Subscription updated:', {
+          eventId: event.id,
+          customerId: event.data.object.customer,
+          subscriptionId: event.data.object.id
+        });
+        break;
+        
+      case 'customer.subscription.deleted':
+        logger.info('Subscription canceled:', {
+          eventId: event.id,
+          customerId: event.data.object.customer,
+          subscriptionId: event.data.object.id
         });
         break;
         
