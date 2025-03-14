@@ -1,22 +1,34 @@
 // utils/logger.js
 
-// A simple logger utility
+// A simple logger utility with enhanced functionality
 const logger = {
-  info: (message, ...args) => {
-    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, ...args);
+  info: (message, metadata = {}) => {
+    const metadataStr = Object.keys(metadata).length 
+      ? `\n${JSON.stringify(metadata, null, 2)}` 
+      : '';
+    console.log(`[INFO] ${new Date().toISOString()} - ${message}${metadataStr}`);
   },
   
-  error: (message, ...args) => {
-    console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, ...args);
+  error: (message, metadata = {}) => {
+    const metadataStr = Object.keys(metadata).length 
+      ? `\n${JSON.stringify(metadata, null, 2)}` 
+      : '';
+    console.error(`[ERROR] ${new Date().toISOString()} - ${message}${metadataStr}`);
   },
   
-  warn: (message, ...args) => {
-    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args);
+  warn: (message, metadata = {}) => {
+    const metadataStr = Object.keys(metadata).length 
+      ? `\n${JSON.stringify(metadata, null, 2)}` 
+      : '';
+    console.warn(`[WARN] ${new Date().toISOString()} - ${message}${metadataStr}`);
   },
   
-  debug: (message, ...args) => {
+  debug: (message, metadata = {}) => {
     if (process.env.NODE_ENV === 'development') {
-      console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args);
+      const metadataStr = Object.keys(metadata).length 
+        ? `\n${JSON.stringify(metadata, null, 2)}` 
+        : '';
+      console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}${metadataStr}`);
     }
   }
 };
