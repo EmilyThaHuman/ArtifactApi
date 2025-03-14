@@ -15,6 +15,7 @@ import firecrawlRoutes from "./firecrawl/index.js";
 import serperRoutes from "./serper/index.js";
 import toolsRoutes from "./tools/index.js";
 import openaiRoutes from "./openai/index.js";
+import stripeRoutes from "./stripe/index.js";
 
 // Setup multer for file uploads
 const storage = multer.diskStorage({
@@ -55,6 +56,7 @@ export const setupRoutes = (app) => {
   // apiRouter.use("/favicon", faviconRoutes);
   apiRouter.use("/crawlee", crawleeRoutes);
   apiRouter.use("/openai", openaiRoutes);
+  apiRouter.use("/stripe", stripeRoutes);
 
   // Error handling for unmatched routes
   app.use("*", (req, res) => {

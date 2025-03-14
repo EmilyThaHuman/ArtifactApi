@@ -17,6 +17,24 @@ const app = express();
 // Set up middleware
 app.use(helmet());
 app.use(cors());
+
+// Middleware to capture raw body for Stripe webhooks
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/stripe/webhook') {
+    let rawBody = '';
+    req.on('data', (chunk) => {
+      rawBody += chunk.toString();
+    });
+    req.on('end', () => {
+      req.rawBody = rawBody;
+      next();
+    });
+  } else {
+    next();
+  }
+});
+
+// JSON and URL-encoded parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('dev'));
