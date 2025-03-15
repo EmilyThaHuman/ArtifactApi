@@ -64,7 +64,13 @@ axiosRetry(axios, {
 // ------------------------------------------------------
 router.post('/search', handleSearch)
 
+// Add the original route
 router.post('/searchV2', handleSearchV2)
+
+// Add alternative routes with different case patterns to make it more robust
+router.post('/searchv2', handleSearchV2)
+router.post('/SearchV2', handleSearchV2)
+router.post('/SEARCHV2', handleSearchV2)
 
 // ------------------------------------------------------
 // 4. Places Search Endpoint

@@ -50,6 +50,37 @@ app.use(morgan('dev'));
 // Add request logger middleware
 app.use(requestLogger);
 
+// Add debug route to check all registered routes
+app.get('/routes', (req, res) => {
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      // Routes registered directly on the app
+      routes.push({
+        path: middleware.route.path,
+        method: Object.keys(middleware.route.methods)[0].toUpperCase(),
+      });
+    } else if (middleware.name === 'router') {
+      // Router middleware
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          const path = handler.route.path;
+          const method = Object.keys(handler.route.methods)[0].toUpperCase();
+          routes.push({
+            path: middleware.regexp.toString().includes('/api') ? `/api${path}` : path,
+            method,
+          });
+        }
+      });
+    }
+  });
+  
+  res.json({
+    routes,
+    info: 'This is a debug endpoint to list all registered routes'
+  });
+});
+
 // Serve static files from the uploads directory
 app.use('/uploads', express.static('routes/uploads'));
 
@@ -61,6 +92,14 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     docs: `${process.env.API_URL || req.protocol + '://' + req.get('host')}/api-docs`
   });
+});
+
+// Add a direct route to handle /serper/searchV2 requests (non-prefixed version)
+app.post('/serper/searchV2', (req, res) => {
+  // Redirect to the correct API endpoint
+  logger.info('Received request to /serper/searchV2, redirecting to /api/serper/searchV2');
+  req.url = '/api/serper/searchV2';
+  app._router.handle(req, res);
 });
 
 // Set up routes
