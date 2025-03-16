@@ -118,16 +118,26 @@ app.use((err, req, res, next) => {
 
 // Start the server
 const PORT = parseInt(process.env.PORT || '3002', 10);
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = '0.0.0.0'; // Force to 0.0.0.0 for Render deployment
+
+// Get the public URL for the service
+const getPublicUrl = () => {
+  if (process.env.API_URL) return process.env.API_URL;
+  if (process.env.NODE_ENV === 'production') return `https://${process.env.RENDER_EXTERNAL_URL || 'your-app.onrender.com'}`;
+  return `http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`;
+};
 
 // Log important environment variables for debugging
 logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 logger.info(`Port from environment: ${process.env.PORT}`);
+logger.info(`Host: ${HOST}`);
 
 app.listen(PORT, HOST, () => {
+  const publicUrl = getPublicUrl();
   logger.info(`Server running on ${HOST}:${PORT}`);
-  logger.info(`API documentation available at ${process.env.API_URL || `http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`}/api-docs`);
-  logger.info(`Health check endpoint: ${process.env.API_URL || `http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`}/`);
+  logger.info(`Public URL: ${publicUrl}`);
+  logger.info(`API documentation available at ${publicUrl}/api-docs`);
+  logger.info(`Health check endpoint: ${publicUrl}/`);
 });
 
 export default app; 
